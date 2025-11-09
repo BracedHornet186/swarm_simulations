@@ -184,10 +184,11 @@ def launch_setup(context, *args, **kwargs):
     )
     actions.append(reference_node)
 
-    # Kinematic Nodes (one per robot)
+    # One per roboot
     for i in range(num_bots):
         bot_id = f'bot{i + 1}'
         
+        # Kinematic Node
         kinematic_node = Node(
             package='swarm_control',
             executable='kinematic_node.py',
@@ -197,12 +198,12 @@ def launch_setup(context, *args, **kwargs):
             parameters=[{
                 'bot_id': bot_id,
                 'num_bots': num_bots,
-                'delta_radius': delta_radius,
                 'sampling_freq': sampling_freq,
             }]
         )
         actions.append(kinematic_node)
 
+        # MPC Node
         mpc_node = Node(
             package='swarm_control',
             executable='mpc_controller.py',
@@ -216,6 +217,18 @@ def launch_setup(context, *args, **kwargs):
             }]
         )
         actions.append(mpc_node)
+
+    # Visualize Node
+    visualizer_node = Node(
+        package='swarm_control',
+        executable='visualizer_node.py',
+        name='visualizer_node',
+        output='screen',
+        parameters=[{
+            'num_bots': num_bots,
+        }]
+    )
+    actions.append(visualizer_node)
 
     return actions
 

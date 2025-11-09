@@ -53,6 +53,7 @@ def launch_setup(context, *args, **kwargs):
     use_sim_time = LaunchConfiguration('use_sim_time', default='true').perform(context)
     num_bots = int(LaunchConfiguration('num_bots').perform(context))
     delta_radius = float(LaunchConfiguration('delta_radius', default=3.0).perform(context))
+    sampling_freq = float(LaunchConfiguration('sampling_freq', default=2.0).perform(context))
 
     # Load model and URDF
     TURTLEBOT3_MODEL = 'waffle'
@@ -123,19 +124,6 @@ def launch_setup(context, *args, **kwargs):
         )
         actions.append(bridge_node)
 
-        ## Not needed for minimal setup
-        # # Add image bridge if model has camera
-        # image_bridge = None
-        # if TURTLEBOT3_MODEL != 'burger':
-        #     image_bridge = Node(
-        #         package='ros_gz_image',
-        #         executable='image_bridge',
-        #         namespace=namespace,
-        #         arguments=['/' + namespace + '/camera/image_raw'],
-        #         output='screen',
-        #     )
-        # actions.append(image_bridge) if image_bridge else None
-
     # In a multi-robot setup using Gazebo Sim (Harmonic or later), each robot typically
     # requires a separate ROS-Gazebo bridge to relay topics such as sensor data, odometry,
     # and control commands between Gazebo and ROS 2.
@@ -174,7 +162,11 @@ def launch_setup(context, *args, **kwargs):
         executable='graph_observer.py',
         name='graph_observer',
         output='screen',
-        parameters=[{'num_bots': num_bots, 'delta_radius': delta_radius}]
+        parameters=[{
+            'num_bots': num_bots, 
+            'delta_radius': delta_radius,
+            'frequency': sampling_freq,        
+        }]
         )
     actions.append(graph_node)
 
@@ -184,14 +176,18 @@ def launch_setup(context, *args, **kwargs):
         executable='reference_node.py',
         name='reference_node',
         output='screen',
-        parameters=[{'num_bots': num_bots}]
+        parameters=[{
+            'num_bots': num_bots,
+            'frequency': sampling_freq,
+        }]
     )
     actions.append(reference_node)
 
-    # Kinematic Nodes (one per robot)
+    # One per roboot
     for i in range(num_bots):
         bot_id = f'bot{i + 1}'
         
+        # Kinematic Node
         kinematic_node = Node(
             package='swarm_control',
             executable='kinematic_node.py',
@@ -201,8 +197,7 @@ def launch_setup(context, *args, **kwargs):
             parameters=[{
                 'bot_id': bot_id,
                 'num_bots': num_bots,
-                'delta_radius': delta_radius,
-                'role': 'agent'
+                'sampling_freq': sampling_freq,
             }]
         )
         actions.append(kinematic_node)
@@ -221,9 +216,23 @@ def generate_launch_description():
         default_value='3',
         description='Number of TurtleBot3 robots to spawn'
     )
+
+    declare_sampling_freq = DeclareLaunchArgument(
+        'sampling_freq',
+        default_value='2.0',
+        description='Sampling frequency of kinematic model'
+    )
+
+    declare_delta_radius = DeclareLaunchArgument(
+        'delta_radius',
+        default_value='3.0',
+        description='Radius of communication'
+    )
     
     return LaunchDescription([
         declare_use_sim_time,
         declare_num_bots,
+        declare_sampling_freq,
+        declare_delta_radius,
         OpaqueFunction(function=launch_setup)
     ])

@@ -2,7 +2,8 @@
 
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, PointStamped
+from rosgraph_msgs.msg import Clock
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -13,7 +14,9 @@ class VisualizerNode(Node):
         # Parameters
         self.declare_parameter('num_bots', 3)
         self.num_bots = self.get_parameter('num_bots').get_parameter_value().integer_value
-        
+        self.r_vec = None
+        self.time = 0.0
+
         # Store trajectory histories
         self.positions = {b: [] for b in range(1, self.num_bots+1)}
         self.centroid_traj = []
@@ -21,6 +24,8 @@ class VisualizerNode(Node):
         # Subscribers
         for i in range(1, self.num_bots+1):
             self.create_subscription(PoseStamped, f'/bot{i}/pose', self.make_pose_callback(i), 10)
+        self.create_subscription(PointStamped, '/reference', self.reference_callback, 10)
+        self.create_subscription(Clock, '/clock', self.clock_callback, 10)
 
         # Timer for plotting (1 Hz)
         self.create_timer(0.1, self.timer_callback)
@@ -32,7 +37,7 @@ class VisualizerNode(Node):
         self.ax.set_title("Swarm Trajectories")
         self.ax.set_xlabel("X [m]")
         self.ax.set_ylabel("Y [m]")
-        self.ax.axis("equal")
+        # self.ax.axis("equal")
         self.ax.grid(True)
 
     def make_pose_callback(self, bot_id):
@@ -40,6 +45,12 @@ class VisualizerNode(Node):
             pose = np.array([msg.pose.position.x, msg.pose.position.y])
             self.positions[bot_id].append(pose)
         return pose_callback
+    
+    def reference_callback(self, msg: PointStamped):
+        self.r_vec = np.array([msg.point.x, msg.point.y])
+    
+    def clock_callback(self, msg: Clock):
+        self.time = msg.clock.sec
 
     def timer_callback(self):
         # Skip if no data yet
@@ -51,22 +62,19 @@ class VisualizerNode(Node):
         centroid = np.mean(latest_positions, axis=0)
         self.centroid_traj.append(centroid)
 
-        # Compute reference point on circular trajectory
-        t = self.get_clock().now().to_msg().sec
-        ref_x, ref_y = 10 * np.cos(t), 10 * np.sin(t)
-
         # Clear plot
         self.ax.clear()
         self.ax.set_title("Swarm Trajectories with Centroid & Reference")
         self.ax.set_xlabel("X [m]")
         self.ax.set_ylabel("Y [m]")
-        self.ax.axis("equal")
+        self.ax.axis([0, 50, -4, 4])
         self.ax.grid(True)
 
-        # Plot reference circle (static) and current ref point
-        theta = np.linspace(0, 2*np.pi, 200)
-        self.ax.plot(10*np.cos(theta), 10*np.sin(theta), 'r--', label="Reference Circle")
-        self.ax.plot(ref_x, ref_y, 'ro', label="Current Reference")
+        # Plot reference trajectory and current ref point
+        t_ref = np.linspace(0, 50, 200)
+        self.ax.plot(t_ref, 3*np.sin(t_ref/4), 'r--', label="Reference Trajectory")
+        # self.ax.plot(5 + 5*np.cos(t_ref/4), 5*np.sin(t_ref/4), 'r--', label="Reference Trajectory")
+        self.ax.plot(self.r_vec[0], self.r_vec[1], 'ro', label="Current Reference")
 
         # Plot each bot trajectory
         for bot_id, traj in self.positions.items():

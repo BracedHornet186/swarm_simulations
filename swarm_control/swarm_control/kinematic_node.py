@@ -10,9 +10,8 @@ from swarm_control_msgs.msg import Info, RBroadcast
 # Parameters for the kinematic model
 # ===========================================
 M = -5*np.eye(2)     # Coupling gain
-NU = 1.0             # Exponent in denominator
+NU = 2.0             # Exponent in denominator
 EPS = 1e-2           # Small epsilon to avoid division by zero
-DELTA_RADIUS = 3.0   # Communication radius (m)
 
 class KinematicNode(Node):
     def __init__(self):
@@ -21,12 +20,10 @@ class KinematicNode(Node):
         # ---------------- Parameters ----------------
         self.declare_parameter('bot_id', 'bot1')
         self.declare_parameter('num_bots', 3)
-        self.declare_parameter('delta_radius', 3.0)
         self.declare_parameter('sampling_freq', 2.0)
 
         self.bot_id = self.get_parameter('bot_id').get_parameter_value().string_value
         self.num_bots = self.get_parameter('num_bots').get_parameter_value().integer_value
-        self.delta_radius = self.get_parameter('delta_radius').get_parameter_value().double_value
         self.freq = self.get_parameter('sampling_freq').get_parameter_value().double_value
 
         if not self.bot_id:

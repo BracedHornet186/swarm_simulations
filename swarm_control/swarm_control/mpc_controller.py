@@ -15,10 +15,10 @@ class MPCController(Node):
         self.declare_parameter('bot_id', 'bot1')
         self.declare_parameter('num_bots', 3)
         self.declare_parameter('mpc_horizon', 10)
-        self.declare_parameter('max_linear_vel', 0.5)
-        self.declare_parameter('max_angular_vel', 2.0)
+        self.declare_parameter('max_linear_vel', 1.0)
+        self.declare_parameter('max_angular_vel', 1.0)
         self.declare_parameter('max_linear_acc', 1.0)
-        self.declare_parameter('max_angular_acc', 3.0)
+        self.declare_parameter('max_angular_acc', 1.0)
         self.declare_parameter('control_frequency', 10.0)
         
         # Get parameters
