@@ -3,7 +3,7 @@
 Gazebo Transport → ROS 2 Pose Relay Node
 ---------------------------------------
 Subscribes to Gazebo topic /world/default/pose/info (gz.msgs.Pose_V)
-and republishes each model's pose to /<model_name>/pose as geometry_msgs/PoseStamped.
+and republishes each model's pose to /bot_/pose as geometry_msgs/PoseStamped.
 """
 
 import rclpy
@@ -13,7 +13,22 @@ import gz.transport14 as gz
 from gz.msgs11 import pose_v_pb2
 from threading import Thread
 import time
+import sys, os, contextlib
 
+# --- Suppress protobuf descriptor warnings ---
+@contextlib.contextmanager
+def suppress_protobuf_warnings():
+    with open(os.devnull, 'w') as devnull:
+        old_stderr = sys.stderr
+        sys.stderr = devnull
+        try:
+            yield
+        finally:
+            sys.stderr = old_stderr
+
+with suppress_protobuf_warnings():
+    import gz.transport14 as gz
+    from gz.msgs11 import pose_v_pb2
 
 class PosePublisherNode(Node):
     def __init__(self):
@@ -33,7 +48,7 @@ class PosePublisherNode(Node):
         self.gz_thread = Thread(target=self._gz_spin, daemon=True)
         self.gz_thread.start()
 
-        self.get_logger().info("GazeboPoseRelay started. Listening on /world/default/pose/info ...")
+        self.get_logger().info("PosePublisher node started. Listening on /world/default/pose/info ...")
 
     # -------------------------------------------------
     # Gazebo transport callback
@@ -73,7 +88,7 @@ class PosePublisherNode(Node):
     def _gz_spin(self):
         """Continuously process Gazebo messages in a background thread."""
         while rclpy.ok():
-            time.sleep(0.001)  # prevents busy-wait
+            time.sleep(0.01)  # prevents busy-wait
 
 
 def main(args=None):

@@ -87,12 +87,16 @@ swarm_control/
   - `/bot_i/delta` (`geometry_msgs/PointStamped`) → agent’s Δ state  
 - **Computation:**
 
-  \[
+  $
   \dot{\Delta}_i = -\Delta_i \;-\; 
   \frac{M}{|\mathcal{N}_i| + 1} 
   \sum_{j \in \mathcal{N}_i} 
   \frac{(\Delta_i - \Delta_j)}{\|\Delta_i - \Delta_j\|^{\nu} + \varepsilon}
-  \]
+  $
+  
+  $
+  \Delta_i(t + T_s) = \Delta_i(t) + T_s \, \dot{\Delta}_i(t)
+  $
 
 
 ## ⚙️ Parameters

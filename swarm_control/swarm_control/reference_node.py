@@ -10,9 +10,11 @@ class ReferenceNode(Node):
         super().__init__('reference_node')
 
         # Params
-        self.num_bots = self.declare_parameter('num_bots', 3).value
-        self.time = 0.0
-        self.dt = 0.05
+        self.declare_parameter('num_bots', 3)
+        self.declare_parameter('frequency', 2.0)
+
+        self.num_bots = self.get_parameter('num_bots').get_parameter_value().integer_value
+        self.freq = self.get_parameter('frequency').get_parameter_value().double_value
         self.leaders = set()
 
         # Publishers
@@ -24,7 +26,7 @@ class ReferenceNode(Node):
             self.create_subscription(Info, f'/bot{i}/info', self.info_callback, 10)
 
         # Timer
-        self.create_timer(self.dt, self.timer_callback)
+        self.create_timer(1.0 / self.freq, self.timer_callback)
         self.get_logger().info("Reference node started")
 
     def info_callback(self, msg: Info):
@@ -35,9 +37,9 @@ class ReferenceNode(Node):
 
     def timer_callback(self):
         # Generate r(t)
-        t = self.time
-        r_vec = np.array([t, 3*np.sin(t)])
-        self.time += self.dt
+        now = self.get_clock().now().to_msg()
+        t = now.sec
+        r_vec = np.array([10*np.cos(t), 10*np.sin(t)])
 
         # Publish /reference
         ref_msg = PointStamped()

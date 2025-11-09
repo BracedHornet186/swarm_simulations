@@ -9,8 +9,7 @@ from swarm_control_msgs.msg import Info, RBroadcast
 # ===========================================
 # Parameters for the kinematic model
 # ===========================================
-T_S = 0.05           # Sampling period [s]
-M = -np.eye(2)       # Coupling gain
+M = -5*np.eye(2)     # Coupling gain
 NU = 1.0             # Exponent in denominator
 EPS = 1e-2           # Small epsilon to avoid division by zero
 DELTA_RADIUS = 3.0   # Communication radius (m)
@@ -23,12 +22,12 @@ class KinematicNode(Node):
         self.declare_parameter('bot_id', 'bot1')
         self.declare_parameter('num_bots', 3)
         self.declare_parameter('delta_radius', 3.0)
-        self.declare_parameter('role', 'agent')
+        self.declare_parameter('sampling_freq', 2.0)
 
         self.bot_id = self.get_parameter('bot_id').get_parameter_value().string_value
         self.num_bots = self.get_parameter('num_bots').get_parameter_value().integer_value
         self.delta_radius = self.get_parameter('delta_radius').get_parameter_value().double_value
-        self.role = self.get_parameter('role').get_parameter_value().string_value
+        self.freq = self.get_parameter('sampling_freq').get_parameter_value().double_value
 
         if not self.bot_id:
             self.get_logger().error("Parameter 'bot_id' not provided! Exiting.")
@@ -68,7 +67,7 @@ class KinematicNode(Node):
         self.create_subscription(RBroadcast, '/r_broadcast', self.r_cb, 10)
 
         # ---------------- Timer ----------------
-        self.create_timer(T_S, self.timer_callback)
+        self.create_timer(1.0 / self.freq, self.timer_callback)
         self.get_logger().info(f"{self.bot_id}: Kinematic node started")
 
     # ===========================================
@@ -107,16 +106,6 @@ class KinematicNode(Node):
             f"{self.bot_id}: Received r_broadcast from {msg.id}: r={self.r_vec}"
         )
 
-    # def compute_neighbors(self):
-    #     """Return list of neighbors within delta_radius based on poseetry."""
-    #     neighbors = []
-    #     for bot, pose in self.pose_dict.items():
-    #         if pose is not None:
-    #             dist = np.linalg.norm(self.my_pose - pose)
-    #             if dist <= self.delta_radius:
-    #                 neighbors.append(bot)
-    #     return neighbors
-
     # ===========================================
     # Main periodic update
     # ===========================================
@@ -142,7 +131,7 @@ class KinematicNode(Node):
 
         # 4. Δ̇ update and Euler integration
         d_delta = -self.delta - (M / n_cc) @ coupling
-        self.delta += T_S * d_delta
+        self.delta += d_delta / self.freq
 
         # 5. Publish updated delta
         delta_msg = PointStamped()

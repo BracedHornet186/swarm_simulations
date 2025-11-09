@@ -23,7 +23,7 @@ install(
   swarm_control/kinematic_node.py
   swarm_control/reference_node.py
   swarm_control/mpc_controller.py
-  swarm_control/mpc_controller_scipy.py
+  swarm_control/visualizer_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -40,4 +40,3 @@ install(DIRECTORY
 ament_python_install_package(swarm_control)
 
 ament_package()
-

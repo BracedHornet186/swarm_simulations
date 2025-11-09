@@ -13,16 +13,17 @@ class GraphObserver(Node):
         # ---------- Parameters ----------
         self.declare_parameter('num_bots', 3)
         self.declare_parameter('delta_radius', 3.0)
+        self.declare_parameter('frequency', 2.0)
 
         self.num_bots = self.get_parameter('num_bots').get_parameter_value().integer_value
         self.delta_radius = self.get_parameter('delta_radius').get_parameter_value().double_value
+        self.freq = self.get_parameter('frequency').get_parameter_value().double_value
 
         self.bot_list = [f'bot{i+1}' for i in range(self.num_bots)]
 
         # ---------- Internal state ----------
         self.positions = {b: None for b in self.bot_list}
         self.adjacency = {b: set() for b in self.bot_list}
-        self.component_map = {}  # bot_id -> component_id
         self.last_leaders = {}   # component_id -> leader_id
 
         # ---------- Subscribers ----------
@@ -33,7 +34,7 @@ class GraphObserver(Node):
         self.info_pubs = {b: self.create_publisher(Info, f'/{b}/info', 10) for b in self.bot_list}
 
         # ---------- Timer ----------
-        self.create_timer(0.2, self.timer_callback)
+        self.create_timer(1.0 / self.freq, self.timer_callback)
 
     # ------------------------------
     # Pose update callback
