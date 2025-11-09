@@ -100,6 +100,17 @@ swarm_control_msgs/
   \Delta_i(t + T_s) = \Delta_i(t) + T_s \, \dot{\Delta}_i(t)
   $
 
+### 5. `mpc_controller.py`
+**Role:** 
+
+
+- **Subscribes:**
+  - `/bot_i/pose` (self)
+  - `/bot_i/delta` → get target Δ values  
+  - `/r_broadcast` → get current reference r(t)
+- **Publishes:**
+  - `/bot_i/cmd_vel` (`geometry_msgs/Twist`) → input velocity  
+
 
 ## Message Definitions
 
@@ -131,25 +142,28 @@ geometry_msgs/Point point
 | `num_bots` | all | Number of robots in the swarm | `3` |
 | `bot_id` | kinematic_node | Robot namespace ID (e.g. `"bot1"`) | — |
 | `role` | kinematic_node | `"leader"` or `"agent"` | `"agent"` |
-| `delta_radius` | all | Vision/communication radius [m] | `3.0` |
+| `delta_radius` | all | Vision/communication radius [m] | `1.5` |
+| `sampling_freq` | reference_node | Sampling Frequency of reference [hz] | `2.0` |
+| `control_freq` | mpc_node | Controller Frequency of MPC node [hz] | `10.0` |
 
 ## Running the Simulation
 
-### 1.Build
+### 1. Build
 ```bash
 cd ~/ros2_ws
 colcon build --symlink-install
 source install/setup.bash
 ```
 
-### 2Launch Swarm Control Stack
+### 2. Launch Swarm Control Stack
 ```bash
-ros2 launch swarm_control swarm_launch.py num_bots:=N
+ros2 launch swarm_control swarm_mpc_launch.py num_bots:=3 delta_radius:=1.5 sampling_freq:=2.0 control_freq:=10.0
 ```
 
 This will:
-- Spawn N robots in Gazebo  
-- Launch one `kinematic_node.py` per bot 
+- Spawn 3 robots in Gazebo  
+- Launch one `kinematic_node.py` per bot
+- Launch one `mpc_controller.py` per bot 
 - Start `pose_publisher_node.py` 
 - Start `graph_observer.py`  
 - Start `reference.py`
@@ -161,9 +175,10 @@ This will:
 |--------|------|------------|--------------|
 | `/bot_i/pose` | `geometry_msgs/PoseStamped` | Gazebo | Ground-truth position |
 | `/bot_i/delta` | `geometry_msgs/PointStamped` | kinematic_node | Local Δ(t) state |
-| `/bot_i/info` | `swarm_control/Info` | kinematic_node / graph_observer | Status + role |
+| `/bot_i/info` | `swarm_control/Info` | graph_observer | Status + role |
 | `/r_broadcast` | `swarm_control/RBroadcast` | reference | Leader’s reference broadcast |
 | `/reference` | `geometry_msgs/PointStamped` | reference | True reference trajectory |
+| `/bot_i/cmd_vel` | `geometry_msgs/Twist` | mpc_node | Control input (velocity) |
 
 
 ## Algorithmic Flow
@@ -173,6 +188,7 @@ This will:
 3. **Reference Broadcast:** Leaders publish the reference r(t) to `/r_broadcast`.  
 4. **Decentralized Control:** Each agent computes Δᵢ = zᵢ − r(t) using neighbor states and performs the finite-time update.  
 5. **Dynamic Reconfiguration:** When components merge/split, `graph_observer` redefines leaders and publishes updated roles.
+6. **MPC Node:** Solves the control problem using differential drive model to publish `/bot_i/cmd_vel` input.
 
 
 

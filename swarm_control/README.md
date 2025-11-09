@@ -1,4 +1,4 @@
-# 🐝 swarm_control
+# swarm_control
 
 A ROS 2 package for **decentralized swarm coordination and control** using a **finite-time kinematic model** and **dynamic leader election** based on graph connectivity.
 
@@ -6,8 +6,7 @@ This package simulates a multi-robot system (e.g., TurtleBot3s in Gazebo) where 
 The system collectively tracks a reference trajectory in a **distributed** and **leader-adaptive** manner.
 
 
-
-## 📁 Package Overview
+## Package Overview
 
 ```
 swarm_control/
@@ -43,9 +42,15 @@ swarm_control/
 └── README.md
 ```
 
+```
+swarm_control_msgs/
+├── msg/
+│   ├── Info.msg
+│   └── RBroadcast.msg
+└── README.md
+```
 
-
-## 🧩 Nodes Summary
+## Nodes Summary
 
 ### 1. `graph_observer.py`
 **Role:** Central node that monitors the swarm graph in real time.
@@ -55,8 +60,6 @@ swarm_control/
 - **Finds:** connected components  
 - **Elects:** leader = agent with highest degree in each component  
 - **Publishes:** `/bot_i/info` (`Info.msg`) with `role`, `is_active`, and `component_id`
-
-
 
 ### 2. `reference.py`
 **Role:** Global reference generator and leader broadcaster.
@@ -73,7 +76,6 @@ swarm_control/
 - **Publishes:**
   - `/bot_i/pose` (`geometry_msgs/PoseStamped`)
 - **Subscribes:** `/world/default/pose/info` (`gz.msgs.Pose_V`)
-
 
 ### 4. `kinematic_node.py`
 **Role:** Local agent control node implementing the finite-time kinematic model.
@@ -93,69 +95,104 @@ swarm_control/
   \sum_{j \in \mathcal{N}_i} 
   \frac{(\Delta_i - \Delta_j)}{\|\Delta_i - \Delta_j\|^{\nu} + \varepsilon}
   $
-  
+
   $
   \Delta_i(t + T_s) = \Delta_i(t) + T_s \, \dot{\Delta}_i(t)
   $
 
+### 5. `mpc_controller.py`
+**Role:** 
 
-## ⚙️ Parameters
+
+- **Subscribes:**
+  - `/bot_i/pose` (self)
+  - `/bot_i/delta` → get target Δ values  
+  - `/r_broadcast` → get current reference r(t)
+- **Publishes:**
+  - `/bot_i/cmd_vel` (`geometry_msgs/Twist`) → input velocity  
+
+
+## Message Definitions
+
+### **`Info.msg`**
+```msg
+string id
+string role
+builtin_interfaces/Time stamp
+bool is_active
+string status_msg
+int32 component_id
+```
+> Published by `graph_observer` and each `kinematic_node`.  
+> Tracks each robot’s identity, role, and component assignment.
+
+### **`RBroadcast.msg`**
+```msg
+string id
+builtin_interfaces/Time stamp
+geometry_msgs/Point point
+```
+> Published by `reference.py`.  
+> Contains the reference trajectory point r(t) broadcast by a leader.
+
+## Parameters
 
 | Parameter | Node | Description | Default |
 |------------|------|--------------|----------|
 | `num_bots` | all | Number of robots in the swarm | `3` |
 | `bot_id` | kinematic_node | Robot namespace ID (e.g. `"bot1"`) | — |
 | `role` | kinematic_node | `"leader"` or `"agent"` | `"agent"` |
-| `delta_radius` | all | Vision/communication radius [m] | `3.0` |
+| `delta_radius` | all | Vision/communication radius [m] | `1.5` |
+| `sampling_freq` | reference_node | Sampling Frequency of reference [hz] | `2.0` |
+| `control_freq` | mpc_node | Controller Frequency of MPC node [hz] | `10.0` |
 
+## Running the Simulation
 
-
-## 🚀 Running the Simulation
-
-### 1️⃣ Build
+### 1. Build
 ```bash
 cd ~/ros2_ws
 colcon build --symlink-install
 source install/setup.bash
 ```
 
-### 2️⃣ Launch Swarm Control Stack
+### 2. Launch Swarm Control Stack
 ```bash
-ros2 launch swarm_control swarm_launch.py num_bots:=N
+ros2 launch swarm_control swarm_mpc_launch.py num_bots:=3 delta_radius:=1.5 sampling_freq:=2.0 control_freq:=10.0
 ```
 
 This will:
-- Spawn N robots in Gazebo  
-- Launch one `kinematic_node.py` per bot 
+- Spawn 3 robots in Gazebo  
+- Launch one `kinematic_node.py` per bot
+- Launch one `mpc_controller.py` per bot 
 - Start `pose_publisher_node.py` 
 - Start `graph_observer.py`  
 - Start `reference.py`
 
 
-
-## 📡 Topic Overview (per bot)
+## Topic Overview (per bot)
 
 | Topic | Type | Publisher | Description |
 |--------|------|------------|--------------|
 | `/bot_i/pose` | `geometry_msgs/PoseStamped` | Gazebo | Ground-truth position |
 | `/bot_i/delta` | `geometry_msgs/PointStamped` | kinematic_node | Local Δ(t) state |
-| `/bot_i/info` | `swarm_control/Info` | kinematic_node / graph_observer | Status + role |
+| `/bot_i/info` | `swarm_control/Info` | graph_observer | Status + role |
 | `/r_broadcast` | `swarm_control/RBroadcast` | reference | Leader’s reference broadcast |
 | `/reference` | `geometry_msgs/PointStamped` | reference | True reference trajectory |
+| `/bot_i/cmd_vel` | `geometry_msgs/Twist` | mpc_node | Control input (velocity) |
 
 
-
-## 🧠 Algorithmic Flow
+## Algorithmic Flow
 
 1. **Graph Construction:** `graph_observer` builds a time-varying adjacency graph based on inter-robot distances.  
 2. **Leader Election:** The robot with the **highest degree** in each connected component becomes leader.  
 3. **Reference Broadcast:** Leaders publish the reference r(t) to `/r_broadcast`.  
 4. **Decentralized Control:** Each agent computes Δᵢ = zᵢ − r(t) using neighbor states and performs the finite-time update.  
 5. **Dynamic Reconfiguration:** When components merge/split, `graph_observer` redefines leaders and publishes updated roles.
+6. **MPC Node:** Solves the control problem using differential drive model to publish `/bot_i/cmd_vel` input.
 
 
 
-## 🧩 Extending the Package
+## Extending the Package
 
 - Add a **Model Predictive Control (MPC)** layer for velocity control using `/bot_i/delta` as the input reference.  
 - Include a **visualization node** publishing `visualization_msgs/Marker` lines for graph edges in RViz.  
@@ -164,7 +201,7 @@ This will:
 
 
 
-## 📖 Dependencies
+## Dependencies
 
 - **ROS 2 Jazzy**
 - `geometry_msgs`
@@ -172,7 +209,6 @@ This will:
 - `numpy`
 
 
-
-## 🧑‍💻 Author & Maintainers
+## Author & Maintainers
 
 Developed by **Yash Purswani** and **Trisha Wadhwani** as part of a decentralized swarm control project for **ME5253: Network Dynamics and Controls** at **IIT Madras**.
