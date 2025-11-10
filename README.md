@@ -101,8 +101,7 @@ swarm_control_msgs/
   $
 
 ### 5. `mpc_controller.py`
-**Role:** 
-
+**Role:** Solves the control problem using differential drive model.
 
 - **Subscribes:**
   - `/bot_i/pose` (self)
@@ -142,7 +141,7 @@ geometry_msgs/Point point
 | `num_bots` | all | Number of robots in the swarm | `3` |
 | `bot_id` | kinematic_node | Robot namespace ID (e.g. `"bot1"`) | — |
 | `role` | kinematic_node | `"leader"` or `"agent"` | `"agent"` |
-| `delta_radius` | all | Vision/communication radius [m] | `1.5` |
+| `delta_radius` | graph_observer | Vision/communication radius [m] | `1.5` |
 | `sampling_freq` | reference_node | Sampling Frequency of reference [hz] | `2.0` |
 | `control_freq` | mpc_node | Controller Frequency of MPC node [hz] | `10.0` |
 
@@ -150,6 +149,10 @@ geometry_msgs/Point point
 
 ### 1. Build
 ```bash
+export GZ_SIM_RESOURCE_PATH=~/.gz/gazebo_models:$GZ_SIM_RESOURCE_PATH
+cd ~/ros2_ws/src
+git clone https://github.com/BracedHornet186/swarm_simulations.git
+cp -r swarm_simulations/swarm_control/models/. $GZ_SIM_RESOURCE_PATH
 cd ~/ros2_ws
 colcon build --symlink-install
 source install/setup.bash
@@ -204,6 +207,7 @@ This will:
 ## Dependencies
 
 - **ROS 2 Jazzy**
+- **Gazebo Harmonic**
 - `geometry_msgs`
 - `rclpy`
 - `numpy`
