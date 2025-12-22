@@ -1,0 +1,44 @@
+# Ignore all files in the build directory
+build/
+
+# Ignore all files in the install directory
+install/
+
+# Ignore all files in the log directory
+log/
+
+# Ignore all files that are user specific
+*.swp
+*.swo
+*.git
+*.vs
+*.vim
+*.kate-swp
+*.kate-swo
+*.un~
+.DS_Store
+Thumbs.db
+ehthumbs.db
+*.sublime-project
+*.sublime-workspace
+.local
+.rope
+
+# Ignore all pyc and pyo files
+*.pyc
+*.pyo
+
+# Ignore all files in the .github directory
+.github/
+
+# Ignore all files in the .cache directory
+.cache/
+
+# Ignore all files in the .vscode directory
+.vscode/
+
+# Ignore all files in the .mypy_cache directory
+.mypy_cache/
+
+# Ignore all files in the __pycache__ directory
+__pycache__/
