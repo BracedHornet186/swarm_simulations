@@ -149,10 +149,9 @@ geometry_msgs/Point point
 
 ### 1. Build
 ```bash
-export GZ_SIM_RESOURCE_PATH=~/.gz/gazebo_models:$GZ_SIM_RESOURCE_PATH
 cd ~/ros2_ws/src
 git clone https://github.com/BracedHornet186/swarm_simulations.git
-cp -r swarm_simulations/swarm_control/models/. $GZ_SIM_RESOURCE_PATH
+export GZ_SIM_RESOURCE_PATH=$(pwd)/swarm_control/models/:$GZ_SIM_RESOURCE_PATH
 cd ~/ros2_ws
 colcon build --symlink-install
 source install/setup.bash

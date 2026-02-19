@@ -23,6 +23,7 @@ ehthumbs.db
 *.sublime-workspace
 .local
 .rope
+.vscode
 
 # Ignore all pyc and pyo files
 *.pyc

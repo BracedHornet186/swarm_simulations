@@ -1,6 +1,0 @@
-[submodule "dynamic_path_planning"]
-	path = dynamic_path_planning
-	url = git@github.com:BracedHornet186/dynamic_path_planning.git
-[submodule "gazebo-ros-actor-plugin"]
-	path = gazebo-ros-actor-plugin
-	url = git@github.com:BracedHornet186/gazebo-ros-actor-plugin.git
