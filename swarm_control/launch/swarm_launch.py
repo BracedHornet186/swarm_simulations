@@ -54,6 +54,7 @@ def launch_setup(context, *args, **kwargs):
     num_bots = int(LaunchConfiguration('num_bots').perform(context))
     delta_radius = float(LaunchConfiguration('delta_radius', default=3.0).perform(context))
     sampling_freq = float(LaunchConfiguration('sampling_freq', default=2.0).perform(context))
+    control_freq = float(LaunchConfiguration('control_freq', default=10.0).perform(context))
 
     # Load model and URDF
     TURTLEBOT3_MODEL = 'waffle'
@@ -75,7 +76,7 @@ def launch_setup(context, *args, **kwargs):
     # Spawn each bot
     for i in range(num_bots):
         namespace = f'bot{i + 1}'
-        spawn_radius = 3.0
+        spawn_radius = 1.0
         x_pose = round(random.uniform(-spawn_radius, spawn_radius), 2)
         y_pose = round(random.uniform(-spawn_radius, spawn_radius), 2)
 
@@ -202,6 +203,33 @@ def launch_setup(context, *args, **kwargs):
         )
         actions.append(kinematic_node)
 
+        # MPC Node
+        mpc_node = Node(
+            package='swarm_control',
+            executable='mpc_controller.py',
+            name=f'mpc_node_{bot_id}',
+            namespace=bot_id,
+            output='screen',
+            parameters=[{
+                'bot_id': bot_id,
+                'num_bots': num_bots,
+                'control_frequency': control_freq,
+            }]
+        )
+        actions.append(mpc_node)
+
+    # Visualize Node
+    visualizer_node = Node(
+        package='swarm_control',
+        executable='visualizer_node.py',
+        name='visualizer_node',
+        output='screen',
+        parameters=[{
+            'num_bots': num_bots,
+        }]
+    )
+    actions.append(visualizer_node)
+
     return actions
 
 def generate_launch_description():
@@ -223,6 +251,12 @@ def generate_launch_description():
         description='Sampling frequency of kinematic model'
     )
 
+    declare_control_freq = DeclareLaunchArgument(
+        'control_freq',
+        default_value='10.0',
+        description='Control frequency of the MPC controller'
+    )
+
     declare_delta_radius = DeclareLaunchArgument(
         'delta_radius',
         default_value='3.0',
@@ -233,6 +267,7 @@ def generate_launch_description():
         declare_use_sim_time,
         declare_num_bots,
         declare_sampling_freq,
+        declare_control_freq,
         declare_delta_radius,
         OpaqueFunction(function=launch_setup)
     ])

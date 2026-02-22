@@ -25,6 +25,9 @@ def launch_setup(context, *args, **kwargs):
     swarm_dir = get_package_share_directory('swarm_control')
     ros_gz_sim_dir = get_package_share_directory('ros_gz_sim')
 
+    # Load config
+    config_path = os.path.join(swarm_dir, 'params', 'swarm_config.yaml')
+
     # Simulation config
     world_path = os.path.join(swarm_dir, 'worlds', 'empty_world.world')
     
@@ -49,12 +52,8 @@ def launch_setup(context, *args, **kwargs):
     )
     actions.append(environment)
 
-    # Read evaluated values
     use_sim_time = LaunchConfiguration('use_sim_time', default='true').perform(context)
-    num_bots = int(LaunchConfiguration('num_bots').perform(context))
-    delta_radius = float(LaunchConfiguration('delta_radius', default=3.0).perform(context))
-    sampling_freq = float(LaunchConfiguration('sampling_freq', default=2.0).perform(context))
-    control_freq = float(LaunchConfiguration('control_freq', default=10.0).perform(context))
+    num_bots = int(LaunchConfiguration('num_bots', default='3').perform(context))
 
     # Load model and URDF
     TURTLEBOT3_MODEL = 'waffle'
@@ -153,7 +152,12 @@ def launch_setup(context, *args, **kwargs):
         executable='pose_publisher_node.py',
         name='pose_publisher_node',
         output='screen',
-        parameters=[{'num_bots': num_bots}]
+        parameters=[
+            config_path,
+                {
+                    'num_bots': num_bots,
+                }
+        ]
     )
     actions.append(pose_pub_node)
 
@@ -163,12 +167,13 @@ def launch_setup(context, *args, **kwargs):
         executable='graph_observer.py',
         name='graph_observer',
         output='screen',
-        parameters=[{
-            'num_bots': num_bots, 
-            'delta_radius': delta_radius,
-            'frequency': sampling_freq,        
-        }]
-        )
+        parameters=[
+            config_path,
+                {
+                    'num_bots': num_bots,
+                }
+        ]
+    )
     actions.append(graph_node)
 
     # Reference Node
@@ -177,10 +182,12 @@ def launch_setup(context, *args, **kwargs):
         executable='reference_node.py',
         name='reference_node',
         output='screen',
-        parameters=[{
-            'num_bots': num_bots,
-            'frequency': sampling_freq,
-        }]
+        parameters=[
+            config_path,
+                {
+                    'num_bots': num_bots,
+                }
+        ]
     )
     actions.append(reference_node)
 
@@ -195,11 +202,13 @@ def launch_setup(context, *args, **kwargs):
             name=f'kinematic_node_{bot_id}',
             namespace=bot_id,
             output='screen',
-            parameters=[{
-                'bot_id': bot_id,
-                'num_bots': num_bots,
-                'sampling_freq': sampling_freq,
-            }]
+            parameters=[
+                config_path,
+                    {
+                        'bot_id': bot_id,
+                        'num_bots': num_bots,
+                    }
+            ]
         )
         actions.append(kinematic_node)
 
@@ -210,11 +219,13 @@ def launch_setup(context, *args, **kwargs):
             name=f'mpc_node_{bot_id}',
             namespace=bot_id,
             output='screen',
-            parameters=[{
-                'bot_id': bot_id,
-                'num_bots': num_bots,
-                'control_frequency': control_freq,
-            }]
+            parameters=[
+                config_path,
+                    {
+                        'bot_id': bot_id,
+                        'num_bots': num_bots,
+                    }
+            ]
         )
         actions.append(mpc_node)
 
@@ -224,9 +235,12 @@ def launch_setup(context, *args, **kwargs):
         executable='visualizer_node.py',
         name='visualizer_node',
         output='screen',
-        parameters=[{
-            'num_bots': num_bots,
-        }]
+        parameters=[
+            config_path,
+                {
+                    'num_bots': num_bots,
+                }
+        ]
     )
     actions.append(visualizer_node)
 
@@ -244,30 +258,9 @@ def generate_launch_description():
         default_value='3',
         description='Number of TurtleBot3 robots to spawn'
     )
-
-    declare_sampling_freq = DeclareLaunchArgument(
-        'sampling_freq',
-        default_value='2.0',
-        description='Sampling frequency of kinematic model'
-    )
-
-    declare_control_freq = DeclareLaunchArgument(
-        'control_freq',
-        default_value='10.0',
-        description='Control frequency of the MPC controller'
-    )
-
-    declare_delta_radius = DeclareLaunchArgument(
-        'delta_radius',
-        default_value='3.0',
-        description='Radius of communication'
-    )
     
     return LaunchDescription([
         declare_use_sim_time,
         declare_num_bots,
-        declare_sampling_freq,
-        declare_control_freq,
-        declare_delta_radius,
         OpaqueFunction(function=launch_setup)
     ])

@@ -65,7 +65,7 @@ swarm_control_msgs/
 **Role:** Global reference generator and leader broadcaster.
 
 - **Publishes:**  
-  - `/reference` (`geometry_msgs/PointStamped`) → trajectory r(t) = [t, sin(t)]  
+  - `/reference` (`geometry_msgs/PointStamped`) → trajectory r(t) = [t, 3*sin(t/4)]  
   - `/r_broadcast` (`RBroadcast.msg`) → leaders’ broadcast of r(t)
 - **Subscribes:** `/bot_i/info` for leader identification  
 - **Behavior:** Leaders detected by `graph_observer` are used to forward r(t) to their components.

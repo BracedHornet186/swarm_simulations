@@ -28,17 +28,12 @@ class VisualizerNode(Node):
         self.create_subscription(Clock, '/clock', self.clock_callback, 10)
 
         # Timer for plotting (1 Hz)
-        self.create_timer(0.1, self.timer_callback)
+        self.create_timer(0.5, self.timer_callback)
         self.get_logger().info(f"Visualizer node started for {self.num_bots} bots")
 
         # Initialize plot
         plt.ion()
         self.fig, self.ax = plt.subplots()
-        self.ax.set_title("Swarm Trajectories")
-        self.ax.set_xlabel("X [m]")
-        self.ax.set_ylabel("Y [m]")
-        # self.ax.axis("equal")
-        self.ax.grid(True)
 
     def make_pose_callback(self, bot_id):
         def pose_callback(msg: PoseStamped):
@@ -78,6 +73,7 @@ class VisualizerNode(Node):
 
         # Plot each bot trajectory
         for bot_id, traj in self.positions.items():
+            self.get_logger().info("NIGGGAA")
             traj = np.array(traj)
             self.ax.plot(traj[:,0], traj[:,1], label=f'Bot {bot_id}')
             self.ax.plot(traj[-1,0], traj[-1,1], 'o')  # current position

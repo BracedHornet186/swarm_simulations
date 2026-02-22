@@ -9,26 +9,10 @@ and republishes each model's pose to /bot_/pose as geometry_msgs/PoseStamped.
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped
-import gz.transport14 as gz
-from gz.msgs11 import pose_v_pb2
+import gz.transport13 as gz
+from gz.msgs10 import pose_v_pb2
 from threading import Thread
 import time
-import sys, os, contextlib
-
-# --- Suppress protobuf descriptor warnings ---
-@contextlib.contextmanager
-def suppress_protobuf_warnings():
-    with open(os.devnull, 'w') as devnull:
-        old_stderr = sys.stderr
-        sys.stderr = devnull
-        try:
-            yield
-        finally:
-            sys.stderr = old_stderr
-
-with suppress_protobuf_warnings():
-    import gz.transport14 as gz
-    from gz.msgs11 import pose_v_pb2
 
 class PosePublisherNode(Node):
     def __init__(self):

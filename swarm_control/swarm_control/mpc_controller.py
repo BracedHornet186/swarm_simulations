@@ -15,10 +15,10 @@ class MPCController(Node):
         self.declare_parameter('bot_id', 'bot1')
         self.declare_parameter('num_bots', 3)
         self.declare_parameter('mpc_horizon', 10)
-        self.declare_parameter('max_linear_vel', 1.0)
+        self.declare_parameter('max_linear_vel', 1.5)
         self.declare_parameter('max_angular_vel', 1.0)
-        self.declare_parameter('max_linear_acc', 1.0)
-        self.declare_parameter('max_angular_acc', 1.0)
+        self.declare_parameter('max_linear_acceleration', 1.0)
+        self.declare_parameter('max_angular_acceleration', 1.0)
         self.declare_parameter('control_frequency', 10.0)
         
         # Get parameters
@@ -27,8 +27,8 @@ class MPCController(Node):
         self.N = self.get_parameter('mpc_horizon').get_parameter_value().integer_value
         self.max_linear_vel = self.get_parameter('max_linear_vel').get_parameter_value().double_value
         self.max_angular_vel = self.get_parameter('max_angular_vel').get_parameter_value().double_value
-        self.max_linear_acc = self.get_parameter('max_linear_acc').get_parameter_value().double_value
-        self.max_angular_acc = self.get_parameter('max_angular_acc').get_parameter_value().double_value
+        self.max_linear_acc = self.get_parameter('max_linear_acceleration').get_parameter_value().double_value
+        self.max_angular_acc = self.get_parameter('max_angular_acceleration').get_parameter_value().double_value
         self.control_freq = self.get_parameter('control_frequency').get_parameter_value().double_value
 
         # ========= Internal State =========

@@ -1,0 +1,29 @@
+/**:
+  ros__parameters:
+    use_sim_time: true
+
+
+graph_observer:
+  ros__parameters:
+    delta_radius: 3.0
+    frequency: 2.0
+
+
+reference_node:
+  ros__parameters:
+    frequency: 2.0
+
+
+kinematic_node:
+  ros__parameters:
+    sampling_freq: 2.0
+
+
+mpc_controller:
+  ros__parameters:
+    mpc_horizon: 10
+    max_linear_velocity: 1.2
+    max_angular_velocity: 1.0
+    max_linear_acceleration: 1.0
+    max_angular_acceleration: 1.0
+    control_frequency: 15.0
