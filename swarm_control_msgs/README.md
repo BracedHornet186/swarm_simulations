@@ -6,6 +6,8 @@ A ROS2 package containing custom messages for `swarm_control` package.
 
 ```
 swarm_control_msgs/
+├── CMakeLists.txt
+├── package.xml
 ├── msg/
 │   ├── Info.msg
 │   └── RBroadcast.msg

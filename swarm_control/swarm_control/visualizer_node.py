@@ -27,8 +27,8 @@ class VisualizerNode(Node):
         self.create_subscription(PointStamped, '/reference', self.reference_callback, 10)
         self.create_subscription(Clock, '/clock', self.clock_callback, 10)
 
-        # Timer for plotting (1 Hz)
-        self.create_timer(0.5, self.timer_callback)
+        # Timer for plotting
+        self.create_timer(0.1, self.timer_callback)
         self.get_logger().info(f"Visualizer node started for {self.num_bots} bots")
 
         # Initialize plot
@@ -49,7 +49,7 @@ class VisualizerNode(Node):
 
     def timer_callback(self):
         # Skip if no data yet
-        if any(len(pose) == 0 for pose in self.positions.values()):
+        if self.r_vec is None or any(len(pose) == 0 for pose in self.positions.values()):
             return
 
         # Compute centroid if all have at least one pose
@@ -73,7 +73,6 @@ class VisualizerNode(Node):
 
         # Plot each bot trajectory
         for bot_id, traj in self.positions.items():
-            self.get_logger().info("NIGGGAA")
             traj = np.array(traj)
             self.ax.plot(traj[:,0], traj[:,1], label=f'Bot {bot_id}')
             self.ax.plot(traj[-1,0], traj[-1,1], 'o')  # current position

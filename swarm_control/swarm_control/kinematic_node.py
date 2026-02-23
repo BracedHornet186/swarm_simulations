@@ -6,13 +6,6 @@ from geometry_msgs.msg import PointStamped
 import numpy as np
 from swarm_control_msgs.msg import Info, RBroadcast
 
-# ===========================================
-# Parameters for the kinematic model
-# ===========================================
-M = -5*np.eye(2)     # Coupling gain
-NU = 2.0             # Exponent in denominator
-EPS = 1e-2           # Small epsilon to avoid division by zero
-
 class KinematicNode(Node):
     def __init__(self):
         super().__init__('kinematic_node')
@@ -21,10 +14,18 @@ class KinematicNode(Node):
         self.declare_parameter('bot_id', 'bot1')
         self.declare_parameter('num_bots', 3)
         self.declare_parameter('sampling_freq', 2.0)
+        self.declare_parameter('M', -5.0)
+        self.declare_parameter('nu', 2.0)
+        self.declare_parameter('eps', 1e-2)
+        self.declare_parameter('beta', 0.5)
 
         self.bot_id = self.get_parameter('bot_id').get_parameter_value().string_value
         self.num_bots = self.get_parameter('num_bots').get_parameter_value().integer_value
         self.freq = self.get_parameter('sampling_freq').get_parameter_value().double_value
+        self.M = self.get_parameter('M').get_parameter_value().double_value * np.eye(2)
+        self.nu = self.get_parameter('nu').get_parameter_value().double_value
+        self.eps = self.get_parameter('eps').get_parameter_value().double_value
+        self.beta = self.get_parameter('beta').get_parameter_value().double_value
 
         if not self.bot_id:
             self.get_logger().error("Parameter 'bot_id' not provided! Exiting.")
@@ -38,7 +39,6 @@ class KinematicNode(Node):
         self.get_logger().info(f"{self.bot_id}: tracking {len(self.agent_list)} agents -> {self.agent_list}")        
 
         # ---------------- State Variables ----------------
-        self.pose_dict = {b: None for b in self.agent_list}
         self.my_pose = None
         self.component_dict = {b: None for b in self.agent_list}
         self.my_cid = None
@@ -54,9 +54,8 @@ class KinematicNode(Node):
         self.create_subscription(PoseStamped, f'/{self.bot_id}/pose', self.pose_callback, 10)
         self.create_subscription(Info, f'/{self.bot_id}/info', self.info_callback, 10)
 
-        # Other bots' pose and delta
+        # Other bots' info and delta
         for bot in self.agent_list:
-            self.create_subscription(PoseStamped, f'/{bot}/pose', self.make_pose_cb(bot), 10)
             self.create_subscription(Info, f'/{bot}/info', self.make_info_cb(bot), 10)
             self.create_subscription(PointStamped, f'/{bot}/delta', self.make_delta_cb(bot), 10)
 
@@ -76,13 +75,6 @@ class KinematicNode(Node):
         
     def info_callback(self, msg: Info):
         self.my_cid = msg.component_id
-
-    def make_pose_cb(self, bot):
-        """Closure for storing pose of other bots."""
-        def cb(msg: PoseStamped):
-            self.pose_dict[bot] = np.array([msg.pose.position.x,
-                                            msg.pose.position.y])
-        return cb
 
     def make_info_cb(self, bot):
         """Closure for storing info of other bots."""
@@ -123,12 +115,20 @@ class KinematicNode(Node):
         coupling = np.zeros(2)
         for nb in component_members:
             diff = self.delta - self.delta_dict[nb]
-            denom = np.linalg.norm(diff)**NU + EPS
+            denom = np.linalg.norm(diff)**self.nu + self.eps
             coupling += diff / denom
+        
+        # 4. Computing zeta(error term)
+        sigma = np.zeros(2)
+        for nb in component_members:
+            sigma += self.delta_dict[nb]
+        sigma += self.delta
+        sigma /= n_cc
+        zeta = np.sign(sigma) * np.linalg.norm(sigma)**self.beta
 
         # 4. Δ̇ update and Euler integration
-        d_delta = -self.delta - (M / n_cc) @ coupling
-        self.delta += d_delta / self.freq
+        d_delta = self.delta + (self.M / n_cc) @ coupling + zeta
+        self.delta -= d_delta / self.freq
 
         # 5. Publish updated delta
         delta_msg = PointStamped()

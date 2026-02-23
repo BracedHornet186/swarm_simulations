@@ -10,43 +10,34 @@ The system collectively tracks a reference trajectory in a **distributed** and *
 
 ```
 swarm_control/
-├── launch/
-│   ├── empty_world.launch.py
-│   └── swarm_launch.py
-├── models/
-│   ├── turtlebot3_common/
-│   │   ├── meshes/
-│   │   │   ├── bases/
-│   │   │   │   └── waffle_base.stl
-│   │   └── model.config
-│   ├── turtlebot3_waffle/
-│   │   └── model.sdf
-│   └── turtlebot3_world/
-├── params/
-│   └── waffle_bridge.yaml
-├── rviz/
-├── swarm_control/
-│   ├── kinematic_node.py
-│   ├── reference.py
-│   ├── graph_observer.py
-│   └── graph_utils.py
-├── urdf/
-│   ├── common_properties.urdf
-|   └── turtlebot3_waffle.urdf
-├── worlds/
-│   ├── tb3_world.world
-│   ├── turtlebot3_house.world
-│   └── empty_world.world
 ├── CMakeLists.txt
+├── launch
+│   ├── empty_world.launch.py
+│   ├── swarm_launch.py
+│   └── swarm_mpc_launch.py
+├── models
 ├── package.xml
-└── README.md
-```
-
-```
-swarm_control_msgs/
-├── msg/
-│   ├── Info.msg
-│   └── RBroadcast.msg
+├── params
+│   ├── minimal_bridge.yaml
+│   └── swarm_config.yaml
+├── rviz
+│   └── swarm.rviz
+├── swarm_control
+│   ├── graph_observer.py
+│   ├── kinematic_node.py
+│   ├── mpc_controller.py
+│   ├── pose_publisher_node.py
+│   ├── reference_node.py
+│   ├── visualizer_node.py
+│   └── utils
+│       └── namespace_utils.py
+├── urdf
+│   ├── common_properties.urdf
+│   ├── minimal_urdf.urdf
+│   └── turtlebot3_waffle.urdf
+├── worlds
+│   ├── empty_world.world
+│   └── tb3_world.world
 └── README.md
 ```
 
@@ -146,28 +137,6 @@ geometry_msgs/Point point
 | `sampling_freq` | reference_node | Sampling Frequency of reference [hz] | `2.0` |
 | `control_freq` | mpc_node | Controller Frequency of MPC node [hz] | `10.0` |
 
-## Running the Simulation
-
-### 1. Build
-```bash
-cd ~/ros2_ws
-colcon build --symlink-install
-source install/setup.bash
-```
-
-### 2. Launch Swarm Control Stack
-```bash
-ros2 launch swarm_control swarm_mpc_launch.py num_bots:=3 delta_radius:=1.5 sampling_freq:=2.0 control_freq:=10.0
-```
-
-This will:
-- Spawn 3 robots in Gazebo  
-- Launch one `kinematic_node.py` per bot
-- Launch one `mpc_controller.py` per bot 
-- Start `pose_publisher_node.py` 
-- Start `graph_observer.py`  
-- Start `reference.py`
-
 
 ## Topic Overview (per bot)
 
@@ -211,4 +180,4 @@ This will:
 
 ## Author & Maintainers
 
-Developed by **Yash Purswani** and **Trisha Wadhwani** as part of a decentralized swarm control project for **ME5253: Network Dynamics and Controls** at **IIT Madras**.
+Developed by **Yash Purswani** as part of a decentralized swarm control project for **ME5253: Network Dynamics and Controls** at **IIT Madras**.
