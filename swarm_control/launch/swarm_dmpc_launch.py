@@ -118,6 +118,7 @@ def launch_setup(context, *args, **kwargs):
         bridge_node = Node(
             package='ros_gz_bridge',
             executable='parameter_bridge',
+            # namespace=namespace,
             arguments=['--ros-args', '-p', f'config_file:={namespaced_bridge}'],
             output='screen',
         )
@@ -198,7 +199,7 @@ def launch_setup(context, *args, **kwargs):
         kinematic_node = Node(
             package='swarm_control',
             executable='kinematic_node.py',
-            name=f'kinematic_node_{bot_id}',
+            name=f'kinematic_node',
             namespace=bot_id,
             output='screen',
             parameters=[
@@ -211,11 +212,11 @@ def launch_setup(context, *args, **kwargs):
         )
         actions.append(kinematic_node)
 
-        # MPC Node
-        mpc_node = Node(
+        # DMPC Node
+        dmpc_node = Node(
             package='swarm_control',
-            executable='mpc_controller.py',
-            name=f'mpc_node_{bot_id}',
+            executable='dmpc_controller.py',
+            name=f'dmpc_node',
             namespace=bot_id,
             output='screen',
             parameters=[
@@ -226,7 +227,7 @@ def launch_setup(context, *args, **kwargs):
                     }
             ]
         )
-        actions.append(mpc_node)
+        actions.append(dmpc_node)
 
     # Visualize Node
     visualizer_node = Node(

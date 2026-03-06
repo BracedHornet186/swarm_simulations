@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import os
-import yaml
 import random
 
 from ament_index_python.packages import get_package_share_directory

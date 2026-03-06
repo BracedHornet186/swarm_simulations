@@ -17,13 +17,24 @@ reference_node:
 kinematic_node:
   ros__parameters:
     sampling_freq: 2.0
-    M: -5.0
+    M: [-4.0, 0.0, 
+        0.0, -4.0]
     nu: 2.0
-    eps: 1e-2
+    eps: 0.01
     beta: 0.5
+    robot_radius: 0.5
 
 
 mpc_controller:
+  ros__parameters:
+    mpc_horizon: 10
+    max_linear_velocity: 1.0
+    max_angular_velocity: 1.0
+    max_linear_acceleration: 1.0
+    max_angular_acceleration: 1.0
+    control_frequency: 15.0
+
+dmpc_controller:
   ros__parameters:
     mpc_horizon: 10
     max_linear_velocity: 1.5

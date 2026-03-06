@@ -14,19 +14,22 @@ class KinematicNode(Node):
         self.declare_parameter('bot_id', 'bot1')
         self.declare_parameter('num_bots', 3)
         self.declare_parameter('sampling_freq', 2.0)
-        self.declare_parameter('M', -5.0)
+        self.declare_parameter('M', [-5.0, 0.0, 0.0, -5.0])
         self.declare_parameter('nu', 2.0)
         self.declare_parameter('eps', 1e-2)
         self.declare_parameter('beta', 0.5)
+        self.declare_parameter('robot_radius', 0.5)
 
         self.bot_id = self.get_parameter('bot_id').get_parameter_value().string_value
         self.num_bots = self.get_parameter('num_bots').get_parameter_value().integer_value
         self.freq = self.get_parameter('sampling_freq').get_parameter_value().double_value
-        self.M = self.get_parameter('M').get_parameter_value().double_value * np.eye(2)
+        self.M = self.get_parameter('M').get_parameter_value().double_array_value
         self.nu = self.get_parameter('nu').get_parameter_value().double_value
         self.eps = self.get_parameter('eps').get_parameter_value().double_value
         self.beta = self.get_parameter('beta').get_parameter_value().double_value
-
+        self.d = 2 * self.get_parameter('robot_radius').get_parameter_value().double_value
+        self.M = np.array(self.M).reshape(2, 2)
+        
         if not self.bot_id:
             self.get_logger().error("Parameter 'bot_id' not provided! Exiting.")
             raise SystemExit
@@ -116,6 +119,7 @@ class KinematicNode(Node):
         for nb in component_members:
             diff = self.delta - self.delta_dict[nb]
             denom = np.linalg.norm(diff)**self.nu + self.eps
+            # denom = self.d * abs(np.linalg.norm(diff) - self.d)**self.nu + self.eps
             coupling += diff / denom
         
         # 4. Computing zeta(error term)
