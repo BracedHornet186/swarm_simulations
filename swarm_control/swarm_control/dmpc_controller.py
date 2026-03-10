@@ -21,6 +21,8 @@ class DMPCController(Node):
         self.declare_parameter('max_linear_acceleration', 1.0)
         self.declare_parameter('max_angular_acceleration', 1.0)
         self.declare_parameter('control_frequency', 10.0)
+        self.declare_parameter('max_deviation', 0.2)
+        self.declare_parameter('safe_distance', 1.0)
         
         # Get parameters
         self.bot_id = self.get_parameter('bot_id').get_parameter_value().string_value
@@ -31,10 +33,10 @@ class DMPCController(Node):
         self.max_linear_acc = self.get_parameter('max_linear_acceleration').get_parameter_value().double_value
         self.max_angular_acc = self.get_parameter('max_angular_acceleration').get_parameter_value().double_value
         self.control_freq = self.get_parameter('control_frequency').get_parameter_value().double_value
+        self.E_i = self.get_parameter('max_deviation').get_parameter_value().double_value
+        self.D_safe = self.get_parameter('safe_distance').get_parameter_value().double_value
 
         # ========= DMPC State Variables =========
-        self.E_i = 0.2                              # Max allowed deviation from previous plan (Eq 25)
-        self.D_safe = 0.4                           # Minimum safe distance between robots
         self.own_prev_traj = np.zeros((2, self.N))  # ˜x_i
         self.neighbor_trajectories = {}             # ˜x_j
 

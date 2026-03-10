@@ -27,18 +27,20 @@ kinematic_node:
 
 mpc_controller:
   ros__parameters:
-    mpc_horizon: 10
+    mpc_horizon: 20
     max_linear_velocity: 1.0
     max_angular_velocity: 1.0
     max_linear_acceleration: 1.0
-    max_angular_acceleration: 1.0
-    control_frequency: 15.0
+    max_angular_acceleration: 0.5
+    control_frequency: 5.0
 
 dmpc_controller:
   ros__parameters:
-    mpc_horizon: 10
-    max_linear_velocity: 1.5
+    mpc_horizon: 20
+    max_linear_velocity: 1.0
     max_angular_velocity: 1.0
     max_linear_acceleration: 1.0
-    max_angular_acceleration: 1.0
-    control_frequency: 15.0
+    max_angular_acceleration: 0.5
+    max_deviation: 0.2
+    safe_distance: 0.4
+    control_frequency: 10.0

@@ -67,6 +67,7 @@ class VisualizerNode(Node):
 
         # Plot reference trajectory and current ref point
         t_ref = np.linspace(0, 50, 200)
+        # self.ax.plot(t_ref, np.zeros_like(t_ref), 'r--', label="Reference Trajectory")
         self.ax.plot(t_ref, 3*np.sin(t_ref/4), 'r--', label="Reference Trajectory")
         # self.ax.plot(5 + 5*np.cos(t_ref/4), 5*np.sin(t_ref/4), 'r--', label="Reference Trajectory")
         self.ax.plot(self.r_vec[0], self.r_vec[1], 'ro', label="Current Reference")

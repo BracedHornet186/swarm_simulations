@@ -19,7 +19,7 @@ from launch_ros.actions import Node
 from swarm_control.utils.namespace_utils import load_sdf_with_namespace, create_namespaced_bridge_yaml
 
 def launch_setup(context, *args, **kwargs):
-    random.seed(42)
+    random.seed(0)
     # Paths
     swarm_dir = get_package_share_directory('swarm_control')
     ros_gz_sim_dir = get_package_share_directory('ros_gz_sim')
@@ -38,11 +38,13 @@ def launch_setup(context, *args, **kwargs):
     )
     actions.append(gzserver_cmd)
 
-    gzclient_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(ros_gz_sim_dir, 'launch', 'gz_sim.launch.py')),
-        launch_arguments={'gz_args': '-g -v2', 'on_exit_shutdown': 'true'}.items()
-    )
-    actions.append(gzclient_cmd)
+    headless = LaunchConfiguration('headless', default='false').perform(context)
+    if headless.lower() == 'false':
+        gzclient_cmd = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(os.path.join(ros_gz_sim_dir, 'launch', 'gz_sim.launch.py')),
+            launch_arguments={'gz_args': '-g -v2', 'on_exit_shutdown': 'true'}.items()
+        )
+        actions.append(gzclient_cmd)
 
     # Add GZ model path to env
     environment = AppendEnvironmentVariable(
@@ -247,6 +249,12 @@ def launch_setup(context, *args, **kwargs):
     return actions
 
 def generate_launch_description():
+    declare_headless = DeclareLaunchArgument(
+        'headless',
+        default_value='false',
+        description='Whether to launch Gazebo client (GUI). Set to "true" for headless simulations.'
+    )
+
     declare_use_sim_time = DeclareLaunchArgument(
         'use_sim_time',
         default_value='true',
@@ -260,6 +268,7 @@ def generate_launch_description():
     )
     
     return LaunchDescription([
+        declare_headless,
         declare_use_sim_time,
         declare_num_bots,
         OpaqueFunction(function=launch_setup)

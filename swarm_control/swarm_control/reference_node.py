@@ -43,7 +43,8 @@ class ReferenceNode(Node):
     def timer_callback(self):
         # Generate r(t)
         t = self.time
-        r_vec = np.array([t, 3*np.sin(t/4)])                  # Sin Wave
+        # r_vec = np.array([t, np.zeros_like(t)], dtype=float)      # Line
+        r_vec = np.array([t, 3*np.sin(t/4)])                    # Sin Wave
         # r_vec = np.array([5 + 5*np.cos(t/8), 5*np.sin(t/8)])    # Circle
 
         # Publish /reference
